@@ -15,9 +15,48 @@ from downloader import SmartDownloader
 # Obtener la ruta base del proyecto
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+import subprocess
+import signal
+
+class MPVMusic:
+    def __init__(self):
+        self.proc = None
+        self.volume = 100
+
+    def load(self, path):
+        self.path = path
+
+    def play(self):
+        self.stop()
+        self.proc = subprocess.Popen([
+            "mpv",
+            "--no-video",
+            "--no-audio-focus",
+            "--volume", str(self.volume),
+            self.path
+        ])
+
+    def stop(self):
+        if self.proc and self.proc.poll() is None:
+            self.proc.send_signal(signal.SIGTERM)
+            self.proc = None
+
+    def get_busy(self):
+        return self.proc and self.proc.poll() is None
+
+    def set_volume(self, vol):
+        self.volume = int(vol * 100)
+
+class FakeMixer:
+    music = MPVMusic()
+
+class FakeMixer2:
+    mixer = FakeMixer()
+
+FakeMixer2 = pygame
+
 class MusicPlayer:
     def __init__(self):
-        pygame.mixer.init()
         self.volume = DEFAULT_VOLUME
         pygame.mixer.music.set_volume(self.volume)
         self.current_playlist = []
